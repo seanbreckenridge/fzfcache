@@ -16,7 +16,7 @@ As an example:
 
 (If it wasn't clear, the END variable determines how many items are printed)
 
-TODO: add real examples of me using this
+As some other examples of this, I use this to [cache food items](https://github.com/seanbreckenridge/ttally#shell-scripts) in [cz](https://github.com/seanbreckenridge/ttally/blob/master/bin/cz) and jump to directories I use often in [tttjump](https://sean.fish/d/tttjump?dark)
 
 ### Install
 
