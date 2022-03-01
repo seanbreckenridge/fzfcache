@@ -124,12 +124,7 @@ func cachedCommand(command string) (string, error) {
 	}
 
 	defer tf.Close()
-	defer func() {
-		_, err := copyFile(tf.Name(), cacheFile)
-		if err != nil {
-			log.Fatalf("Error copying tempfile to fzfcache: %s", err)
-		}
-	}()
+	defer copyFile(tf.Name(), cacheFile)
 
 	// loop over cmd STDOUT
 	scanner := bufio.NewScanner(cmdReader)
