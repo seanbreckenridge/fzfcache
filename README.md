@@ -14,8 +14,6 @@ As an example:
 
 <img src="https://raw.githubusercontent.com/seanbreckenridge/fzfcache/master/.github/demo.gif">
 
-(If it wasn't clear, the END variable determines how many items are printed)
-
 As some other examples of me using this:
 
 - [cache food items](https://github.com/seanbreckenridge/ttally#shell-scripts) (in [`cz`](https://github.com/seanbreckenridge/ttally/blob/master/bin/cz))
