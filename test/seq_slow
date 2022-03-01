@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+for i in {1.."${END:-8}"}; do
+	echo "$i"
+	sleep 0.1
+done
