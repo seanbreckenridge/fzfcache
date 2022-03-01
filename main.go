@@ -13,15 +13,23 @@ import (
 	"strings"
 )
 
+func usage() {
+	fmt.Fprintln(os.Stderr, `usage: fzfcache [-h] <SHELL COMMAND...>
+
+Caches the input from the shell command and/or prints the cached results
+This is typically piped into fzf, to decrease the time till interactive`)
+}
+
 func parseFlags() []string {
 	args := os.Args[1:]
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, `usage: fzfcache <SHELL COMMAND...>
-
-Caches the input from the shell command and/or prints the cached results
-Typically piped into fzf
-
-Error: Not enough arguments -- needs a command`)
+		usage()
+		fmt.Fprintln(os.Stderr, `Error: Not enough arguments -- needs a command`)
+		os.Exit(1)
+	}
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "-help" || args[0] == "--help") {
+		usage()
+		os.Exit(0)
 	}
 	return args
 }
@@ -48,6 +56,7 @@ func copyFile(in, out string) (int64, error) {
 		return 0, e
 	}
 	defer i.Close()
+
 	o, e := os.Create(out)
 	if e != nil {
 		return 0, e
@@ -159,12 +168,10 @@ func commandCacheFile(cacheDir string, command string) string {
 
 func fzfcache() error {
 	shellCmd := strings.Join(parseFlags(), " ")
-	cacheFile := commandCacheFile(getCacheDir(), shellCmd)
-	tempFile, err := cachedCommand(shellCmd, cacheFile)
+	tempFile, err := cachedCommand(shellCmd, commandCacheFile(getCacheDir(), shellCmd))
 	if err != nil {
 		return err
 	}
-	// remove tempfile
 	err = os.Remove(tempFile)
 	if err != nil {
 		return err
