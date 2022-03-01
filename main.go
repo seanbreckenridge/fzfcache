@@ -123,6 +123,7 @@ func cachedCommand(command string) (string, error) {
 		return "", errors.New(fmt.Sprintf("Error creating temporary output file: %s\n", err))
 	}
 
+	defer tf.Sync()
 	defer tf.Close()
 	defer copyFile(tf.Name(), cacheFile)
 
