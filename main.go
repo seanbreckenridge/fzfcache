@@ -65,7 +65,18 @@ func copyFile(in, out string) (int64, error) {
 	return o.ReadFrom(i)
 }
 
-func cachedCommand(command string, cacheFile string) (string, error) {
+func commandCacheFile(command string) string {
+	h := sha1.New()
+	io.WriteString(h, command)
+	sum := fmt.Sprintf("%x", h.Sum(nil))
+	return sum
+}
+
+func cachedCommand(command string) (string, error) {
+
+	commandHash := commandCacheFile(command)
+	cacheFile := path.Join(getCacheDir(), commandHash)
+
 	// whether or not something has already been printed
 	lines := make(map[string]bool)
 
@@ -159,16 +170,9 @@ func cachedCommand(command string, cacheFile string) (string, error) {
 	return tf.Name(), nil
 }
 
-func commandCacheFile(cacheDir string, command string) string {
-	h := sha1.New()
-	io.WriteString(h, command)
-	sum := fmt.Sprintf("%x", h.Sum(nil))
-	return path.Join(cacheDir, sum)
-}
-
 func fzfcache() error {
 	shellCmd := strings.Join(parseFlags(), " ")
-	tempFile, err := cachedCommand(shellCmd, commandCacheFile(getCacheDir(), shellCmd))
+	tempFile, err := cachedCommand(shellCmd)
 	if err != nil {
 		return err
 	}
