@@ -17,9 +17,10 @@ As an example:
 (If it wasn't clear, the END variable determines how many items are printed)
 
 As some other examples of me using this:
-  - [cache food items](https://github.com/seanbreckenridge/ttally#shell-scripts) (in [`cz`](https://github.com/seanbreckenridge/ttally/blob/master/bin/cz))
-  - jump to directories I use often in [`tttjump`](https://sean.fish/d/tttjump?dark)
-  - pick a [config file to edit](https://github.com/seanbreckenridge/dotfiles/blob/2daa728383d7c9b74b5e2a3416b18c7e8469fb09/.config/shortcuts.toml#L5-L24)
+
+- [cache food items](https://github.com/seanbreckenridge/ttally#shell-scripts) (in [`cz`](https://github.com/seanbreckenridge/ttally/blob/master/bin/cz))
+- jump to directories I use often in [`tttjump`](https://sean.fish/d/tttjump?dark)
+- pick a [config file to edit](https://github.com/seanbreckenridge/dotfiles/blob/2daa728383d7c9b74b5e2a3416b18c7e8469fb09/.config/shortcuts.toml#L5-L24)
 
 ### Install
 
