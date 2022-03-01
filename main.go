@@ -65,17 +65,16 @@ func copyFile(in, out string) (int64, error) {
 	return o.ReadFrom(i)
 }
 
-func commandCacheFile(command string) string {
+func commandHash(command string) string {
 	h := sha1.New()
 	io.WriteString(h, command)
 	sum := fmt.Sprintf("%x", h.Sum(nil))
 	return sum
 }
 
-func cachedCommand(command string) (string, error) {
+func cachedCommand(command string) error {
 
-	commandHash := commandCacheFile(command)
-	cacheFile := path.Join(getCacheDir(), commandHash)
+	cacheFile := path.Join(getCacheDir(), commandHash(command))
 
 	// whether or not something has already been printed
 	lines := make(map[string]bool)
@@ -84,7 +83,7 @@ func cachedCommand(command string) (string, error) {
 	if _, err := os.Stat(cacheFile); err == nil {
 		cf, err := os.Open(cacheFile)
 		if err != nil {
-			return "", errors.New(fmt.Sprintf("Error opening cachefile: %s\n", err))
+			return errors.New(fmt.Sprintf("Error opening cachefile: %s\n", err))
 		}
 		reader := bufio.NewScanner(cf)
 		for reader.Scan() {
@@ -94,7 +93,7 @@ func cachedCommand(command string) (string, error) {
 			lines[txt] = true
 		}
 		if err := reader.Err(); err != nil {
-			return "", errors.New(fmt.Sprintf("Error reading from cachefile: %s\n", err))
+			return errors.New(fmt.Sprintf("Error reading from cachefile: %s\n", err))
 		}
 		cf.Close()
 	}
@@ -109,44 +108,26 @@ func cachedCommand(command string) (string, error) {
 	// get STDOUT/STDERR pipes
 	cmdReader, err := cmd.StdoutPipe()
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Error getting STDOUT for command: %s\n", err))
+		return errors.New(fmt.Sprintf("Error getting STDOUT for command: %s\n", err))
 	}
 
 	errReader, err := cmd.StderrPipe()
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Error getting STDERR for command: %s\n", err))
+		return errors.New(fmt.Sprintf("Error getting STDERR for command: %s\n", err))
 	}
 
 	// create tempfile to hold output of current command
 	tf, err := os.CreateTemp("", "fzfcache-")
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Error creating temporary output file: %s\n", err))
+		return errors.New(fmt.Sprintf("Error creating temporary output file: %s\n", err))
 	}
 
-	defer tf.Sync()
-	defer tf.Close()
-	defer copyFile(tf.Name(), cacheFile)
+	err = cmd.Start()
+	if err != nil {
+		return errors.New(fmt.Sprintf("Error starting command: %s\n", err))
+	}
 
-	// loop over cmd STDOUT
-	scanner := bufio.NewScanner(cmdReader)
-	go func() {
-		for scanner.Scan() {
-			txt := scanner.Text()
-			// if this line hasn't already been printed
-			if !lines[txt] {
-				// save it, and print
-				lines[txt] = true
-				fmt.Println(txt)
-			}
-			// append to tempfile, so we can overwrite previous results
-			if _, err := tf.WriteString(txt + "\n"); err != nil {
-				log.Fatal(err)
-			}
-			// print if not already in in-mem set which keeps track of printed lines
-		}
-	}()
-
-	// write errors to stderr
+	// write any errors to program stderr
 	errScanner := bufio.NewScanner(errReader)
 	go func() {
 		for errScanner.Scan() {
@@ -154,25 +135,45 @@ func cachedCommand(command string) (string, error) {
 		}
 	}()
 
-	err = cmd.Start()
-	if err != nil {
-		return "", errors.New(fmt.Sprintf("Error starting command: %s\n", err))
+	// print if not already in in-mem set which keeps track of printed lines
+	scanner := bufio.NewScanner(cmdReader)
+	for scanner.Scan() {
+		txt := scanner.Text()
+		// if this line hasn't already been printed
+		if !lines[txt] {
+			// save it, and print
+			lines[txt] = true
+			fmt.Println(txt)
+		}
+		// append to tempfile, so we can overwrite previous results
+		if _, err := tf.WriteString(txt + "\n"); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Error waiting for command: %s\n", err))
+		return errors.New(fmt.Sprintf("Error waiting for command: %s\n", err))
 	}
-	return tf.Name(), nil
+
+	err = tf.Close()
+	if err != nil {
+		return errors.New(fmt.Sprintf("Could not close tempfile: %s\n", err))
+	}
+	_, err = copyFile(tf.Name(), cacheFile)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Could not copy tempfile to cache: %s\n", err))
+	}
+	err = os.Remove(tf.Name())
+	if err != nil {
+		return errors.New(fmt.Sprintf("Could not remove tempfile: %s\n", err))
+	}
+	return nil
 }
 
-func fzfcache() error {
+func fzfCache() error {
 	shellCmd := strings.Join(parseFlags(), " ")
-	tempFile, err := cachedCommand(shellCmd)
-	if err != nil {
-		return err
-	}
-	err = os.Remove(tempFile)
+	err := cachedCommand(shellCmd)
 	if err != nil {
 		return err
 	}
@@ -180,7 +181,7 @@ func fzfcache() error {
 }
 
 func main() {
-	if err := fzfcache(); err != nil {
+	if err := fzfCache(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s", err.Error())
 		os.Exit(1)
 	}

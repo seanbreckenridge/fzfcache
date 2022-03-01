@@ -20,8 +20,6 @@ As some other examples of me using this:
 - jump to directories I use often in [`tttjump`](https://sean.fish/d/tttjump?dark)
 - pick a [config file to edit](https://github.com/seanbreckenridge/dotfiles/blob/2c579f32e6c3a5d42736816e4d38e0a409a847e4/.config/shortcuts.toml#L5-L21)
 
-Still a WIP -- it seems that when this is a run for a new command it misses a few rows (may have something to do with the `tempFile` closing while this is still streaming results?). On warm cache everything works as expected.
-
 ### Install
 
 Using `go install` to put it on your `$GOBIN`:
