@@ -27,3 +27,10 @@ As some other examples of me using this:
 Using `go install` to put it on your `$GOBIN`:
 
 `go install github.com/seanbreckenridge/fzfcache@latest`
+
+```
+usage: fzfcache [-h] <SHELL COMMAND...>
+
+Caches the input from the shell command and/or prints the cached results
+This is typically piped into fzf, to decrease the time till interactive
+```
