@@ -4,9 +4,9 @@ A small cache for unique lines of text, used to speedup the load time of expensi
 
 Given any shell command as positional arguments:
 
-- If that command had been run in the past (determined by hashing the command itself), immediately prints the cached value -- this means you can immediately select something with `fzf`
-- Prints any lines from that shell command to STDOUT, which haven't already been printed from the cachefile
-- Once the shell command exits, saves the shell command output to a file in `~/.cache/fzfcache/`
+- If that command has been run in the past (determined by hashing the command itself), immediately prints the cached value -- this means you can immediately select something with `fzf`
+- Prints any lines from that shell command to STDOUT, which haven't already been printed from the cachefile, removing any duplicates
+- Once the shell command exits, saves the output of the shell command to a file in `~/.cache/fzfcache/`
 
 This keeps a history of one command, so its possible that lines from the previous result are included in the current `fzf` buffer/cachefile. So, if exact results are very important every time this is run, this probably isn't for you.
 
