@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -24,7 +23,7 @@ func parseFlags() []string {
 	args := os.Args[1:]
 	if len(args) == 0 {
 		usage()
-		fmt.Fprintln(os.Stderr, `Error: Not enough arguments -- needs a command`)
+		fmt.Fprintln(os.Stderr, `Error: Not enough arguments -- needs a shell command`)
 		os.Exit(1)
 	}
 	if len(args) == 1 && (args[0] == "-h" || args[0] == "-help" || args[0] == "--help") {
@@ -34,20 +33,20 @@ func parseFlags() []string {
 	return args
 }
 
-func getCacheDir() (cachedir string) {
-	cachedir = os.Getenv("FZFCACHE_DIR")
-	if cachedir == "" {
+func getCacheDir() (string, error) {
+	cachedir := os.Getenv("FZFCACHE_DIR")
+	if len(cachedir) == 0 {
 		cdir := os.Getenv("XDG_CACHE_HOME")
-		if cdir == "" {
+		if len(cdir) == 0 {
 			cdir = path.Join(os.Getenv("HOME"), ".cache")
 		}
 		cachedir = path.Join(cdir, "fzfcache")
 	}
 	err := os.MkdirAll(cachedir, 0700)
 	if err != nil {
-		log.Fatalf("Could not create cache directory: %s\n", err)
+		return "", errors.New(fmt.Sprintf("Could not create cache directory: %s\n", err))
 	}
-	return
+	return cachedir, nil
 }
 
 func copyFile(in, out string) (int64, error) {
@@ -74,7 +73,11 @@ func commandHash(command string) string {
 
 func cachedCommand(command string) error {
 
-	cacheFile := path.Join(getCacheDir(), commandHash(command))
+	cacheDir, err := getCacheDir()
+	if err != nil {
+		return err
+	}
+	cacheFile := path.Join(cacheDir, commandHash(command))
 
 	// whether or not something has already been printed
 	lines := make(map[string]bool)
@@ -106,12 +109,12 @@ func cachedCommand(command string) error {
 	cmd := exec.Command(shell, "-c", command)
 
 	// get STDOUT/STDERR pipes
-	cmdReader, err := cmd.StdoutPipe()
+	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
 		return errors.New(fmt.Sprintf("Error getting STDOUT for command: %s\n", err))
 	}
 
-	errReader, err := cmd.StderrPipe()
+	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
 		return errors.New(fmt.Sprintf("Error getting STDERR for command: %s\n", err))
 	}
@@ -127,16 +130,16 @@ func cachedCommand(command string) error {
 		return errors.New(fmt.Sprintf("Error starting command: %s\n", err))
 	}
 
-	// write any errors to program stderr
-	errScanner := bufio.NewScanner(errReader)
 	go func() {
+		// write any errors to program stderr
+		errScanner := bufio.NewScanner(stderrPipe)
 		for errScanner.Scan() {
 			fmt.Fprintln(os.Stderr, errScanner.Text())
 		}
 	}()
 
 	// print if not already in in-mem set which keeps track of printed lines
-	scanner := bufio.NewScanner(cmdReader)
+	scanner := bufio.NewScanner(stdoutPipe)
 	for scanner.Scan() {
 		txt := scanner.Text()
 		// if this line hasn't already been printed
@@ -147,7 +150,7 @@ func cachedCommand(command string) error {
 		}
 		// append to tempfile, so we can overwrite previous results
 		if _, err := tf.WriteString(txt + "\n"); err != nil {
-			log.Fatal(err)
+			return errors.New(fmt.Sprintf("Error writing to tempfile: %s\n", err))
 		}
 	}
 
