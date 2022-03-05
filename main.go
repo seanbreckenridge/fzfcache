@@ -36,9 +36,9 @@ func parseFlags() []string {
 func getCacheDir() (string, error) {
 	cachedir := os.Getenv("FZFCACHE_DIR")
 	if len(cachedir) == 0 {
-		cdir := os.Getenv("XDG_CACHE_HOME")
-		if len(cdir) == 0 {
-			cdir = path.Join(os.Getenv("HOME"), ".cache")
+		cdir, err := os.UserCacheDir()
+		if err != nil {
+			return "", err
 		}
 		cachedir = path.Join(cdir, "fzfcache")
 	}
