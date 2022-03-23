@@ -17,7 +17,7 @@ As an example:
 As some other examples of me using this:
 
 - [cache food items](https://github.com/seanbreckenridge/ttally#shell-scripts) (in [`cz`](https://github.com/seanbreckenridge/ttally/blob/master/bin/cz))
-- jump to directories I use often in [`tttjump`](https://sean.fish/d/tttjump?dark)
+- jump to directories I use often in [`cd.zsh`](https://sean.fish/d/cd.zsh?dark)
 - pick a [config file to edit](https://github.com/seanbreckenridge/dotfiles/blob/2c579f32e6c3a5d42736816e4d38e0a409a847e4/.config/shortcuts.toml#L5-L21)
 - pick a [config file to send to someone](https://sean.fish/d/give?dark)
 - search my [github stars](https://sean.fish/d/mystarsfzf?dark)
